@@ -14,9 +14,14 @@ namespace G.One_GUI
     using HidLibrary;
     public partial class Form1 : Form
     {
-        private static HidDevice _device;
+        private List<HidDevice> _devices = new List<HidDevice>();
         private const int VID = 0xFEED;
         private const int PID = 0x6060;
+        private const ushort UsagePage = 0xFF60;
+
+        public const ushort ConsoleUsagePage = 0xFF31;
+        public const int ConsoleUsage = 0x0074;
+
         private string strConn = "Server=gvsolgryn.nemiku.cc;Database=TestIoT;Uid=iot;Pwd=1q2w3e4r;";
         public Form1()
         {
@@ -39,36 +44,30 @@ namespace G.One_GUI
                 richTextBox.Invoke(new Action<RichTextBox, string>(AppendText), richTextBox, text);
             }
         }
-        public void Device()
+        public void Device(bool disconnected)
         {
-            _device = HidDevices.Enumerate(VID, PID).First();
-            if (10 > _device.Capabilities.InputReportByteLength)
+            var devices = GetListableDevices().ToList();
+
+            if (!disconnected)
             {
-                _device = HidDevices.Enumerate(VID, PID).Last();
-            }
+                foreach (var device in devices)
+                {
+                    var deviceExists = _devices.Aggregate(false, (current, dev) => current | dev.DevicePath.Equals(device.DevicePath));
 
-            if (_device != null)
-            {
-                _device.OpenDevice();
+                    if (device == null || deviceExists) continue;
 
-                _device.MonitorDeviceEvents = true;
+                    _devices.Add(device);
+                    device.OpenDevice();
 
-                _device.Inserted += DeviceAttachedHandler;
-                _device.Removed += DeviceRemovedHandler;
+                    device.Inserted += DeviceAttachedHandler;
+                    device.Removed += DeviceRemovedHandler;
 
-                string testString = "G.One 키보드 인식 완료";
-                AppendText(richTextBox ,testString);
-                Console.WriteLine("G.One 키보드 인식 완료");
+                    device.MonitorDeviceEvents = true;
 
-                _device.ReadReport(OnReport);
-
-                _device.CloseDevice();
-            }
-            else
-            {
-                MessageBox.Show("키보드 인식 실패!! 키보드 연결 후 확인을 눌러주세요.");
-                Console.WriteLine("키보드 인식 실패");
-                Device();
+                    AppendText(richTextBox, "G.One 키보드 장치 인식 완료");
+                    device.ReadReport(OnReport);
+                    device.CloseDevice();
+                }
             }
         }
         private void OnReport(HidReport report)
@@ -78,25 +77,72 @@ namespace G.One_GUI
 
             if (0 < data.Length)
             {
-                stringData = Encoding.Default.GetString(data);
+                stringData = Encoding.UTF8.GetString(data).Trim('\0');
             }
             else
             {
                 MessageBox.Show("에러!");
             }
             Console.WriteLine(stringData);
-            Console.WriteLine(_device.Capabilities.InputReportByteLength);
-            stringData += Environment.NewLine;
             AppendText(richTextBox, stringData);
+            HID_Status_Change(stringData);
             stringData = string.Empty;
 
-            _device.ReadReport(OnReport);
+            foreach (var device in _devices)
+            {
+                device.ReadReport(OnReport);
+            }
         }
         private void DeviceAttachedHandler()
         {
+            MessageBox.Show("기기가 연결 되었습니다");
         }
         private void DeviceRemovedHandler()
         {
+            MessageBox.Show("기기가 제거 되었습니다");
+        }
+        private static IEnumerable<HidDevice> GetListableDevices() =>
+            HidDevices.Enumerate()
+                .Where(d => d.IsConnected)
+                .Where(device => device.Capabilities.InputReportByteLength > 0)
+                .Where(device => (ushort)device.Capabilities.UsagePage == ConsoleUsagePage)
+                .Where(device => (ushort)device.Capabilities.Usage == ConsoleUsage);
+        private void HID_Status_Change(string HID_Data)
+        {
+            if (HID_Data == "LED")
+            {
+                MySqlConnection conn = new MySqlConnection(strConn);
+                conn.Open();
+                string sql = "SELECT STATUS,SENSOR from test where ID='1'";
+                MySqlCommand cmd = new MySqlCommand(sql, conn);
+                MySqlDataReader tableData = cmd.ExecuteReader();
+                tableData.Read();
+                Console.WriteLine("Status: {0}", tableData["STATUS"]);
+                string name;
+                int status;
+                status = (int)tableData["STATUS"];
+                name = tableData["SENSOR"].ToString();
+                ChangeStatus(status, name);
+                tableData.Close();
+                conn.Close();
+            }
+            else if (HID_Data == "MULTI")
+            {
+                MySqlConnection conn = new MySqlConnection(strConn);
+                conn.Open();
+                string sql = "SELECT STATUS,SENSOR from test where ID='2'";
+                MySqlCommand cmd = new MySqlCommand(sql, conn);
+                MySqlDataReader tableData = cmd.ExecuteReader();
+                tableData.Read();
+                Console.WriteLine("Status: {0}", tableData["STATUS"]);
+                string name;
+                int status;
+                status = (int)tableData["STATUS"];
+                name = tableData["SENSOR"].ToString();
+                ChangeStatus(status, name);
+                tableData.Close();
+                conn.Close();
+            }
         }
         public void TableLoad(string sql)
         {
@@ -116,7 +162,7 @@ namespace G.One_GUI
                 status = tableData["STATUS"].ToString();
                 last = tableData["LAST_Use"].ToString();
 
-                AppendText(richTextBox, "ID : "+id+'\n'+"센서 이름 : "+sensor+'\n'+"상태 : "+status+'\n' + "마지막 사용 시간" + last + '\n' + Underbar.underbar + '\n');
+                AppendText(richTextBox, "ID : "+id+'\n'+"센서 이름 : "+sensor+'\n'+"상태 : "+status+'\n' + "마지막 사용 시간 : " + last + '\n' + Underbar.underbar + '\n');
             }
             tableData.Close();
             conn.Close();
@@ -131,7 +177,6 @@ namespace G.One_GUI
 
             if (status == 0)
             {
-                //string test = "UPDATE test SET STATUS = 1, LAST_Use = now() WHERE SENSOR = @sensorName";
                 cmd.CommandText = "UPDATE test SET STATUS = 1, LAST_Use = now() WHERE SENSOR = @sensorName";
                 cmd.Parameters.Add("@sensorName", MySqlDbType.VarChar, 20);
                 cmd.Parameters[0].Value = name;
@@ -148,11 +193,6 @@ namespace G.One_GUI
             }
             else AppendText(richTextBox, "쿼리 에러");
             conn.Close();
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            Device();
         }
         private void DB_btn_Click(object sender, EventArgs e)
         {
@@ -193,6 +233,33 @@ namespace G.One_GUI
             ChangeStatus(status, name);
             tableData.Close();
             conn.Close();
+        }
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            Device(false);
+        }
+        private void Form1_FormClosing(object sender, FormClosedEventArgs e)
+        {
+            
+        }
+
+        private void notifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ToolStrip_Open_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ToolStrip_Close_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
