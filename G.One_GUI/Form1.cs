@@ -12,7 +12,7 @@ namespace G.One_GUI
 {
     public partial class Form1 : Form
     {
-        private List<HidDevice> _devices = new List<HidDevice>();
+        private readonly List<HidDevice> _devices = new List<HidDevice>();
         public const ushort ConsoleUsagePage = 0xFF31;
         public const int ConsoleUsage = 0x0074;
 
