@@ -1,28 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
+using HidLibrary;
+using uPLibrary.Networking.M2Mqtt;
 
 namespace G.One_GUI
 {
-    using HidLibrary;
     public partial class Form1 : Form
     {
         private List<HidDevice> _devices = new List<HidDevice>();
-        private const int VID = 0xFEED;
-        private const int PID = 0x6060;
-        private const ushort UsagePage = 0xFF60;
 
         public const ushort ConsoleUsagePage = 0xFF31;
         public const int ConsoleUsage = 0x0074;
 
-        private string strConn = "Server=gvsolgryn.nemiku.cc;Database=TestIoT;Uid=iot;Pwd=1q2w3e4r;";
+        private readonly string strConn = "Server=gvsolgryn.nemiku.cc;Database=TestIoT;Uid=userID;Pwd=userPW;";
+        
         public Form1()
         {
             InitializeComponent();
@@ -118,11 +114,12 @@ namespace G.One_GUI
                 MySqlDataReader tableData = cmd.ExecuteReader();
                 tableData.Read();
                 Console.WriteLine("Status: {0}", tableData["STATUS"]);
-                string name;
+                string name, topic;
                 int status;
                 status = (int)tableData["STATUS"];
                 name = tableData["SENSOR"].ToString();
-                ChangeStatus(status, name);
+                topic = "LEDTopic";
+                ChangeStatus(status, name, topic);
                 tableData.Close();
                 conn.Close();
             }
@@ -135,11 +132,12 @@ namespace G.One_GUI
                 MySqlDataReader tableData = cmd.ExecuteReader();
                 tableData.Read();
                 Console.WriteLine("Status: {0}", tableData["STATUS"]);
-                string name;
+                string name, topic;
                 int status;
                 status = (int)tableData["STATUS"];
                 name = tableData["SENSOR"].ToString();
-                ChangeStatus(status, name);
+                topic = "MULTITopic";
+                ChangeStatus(status, name, topic);
                 tableData.Close();
                 conn.Close();
             }
@@ -168,11 +166,12 @@ namespace G.One_GUI
             conn.Close();
         }
 
-        public void ChangeStatus(int status, string name)
+        public void ChangeStatus(int status, string name, string topic)
         {
+            MqttClient client = new MqttClient("gvsolgryn.ddns.net");
             MySqlConnection conn = new MySqlConnection(strConn);
             conn.Open();
-            string sql = "SELECT STATUS from test where SENSOR='led'";
+            string sql = "'";
             MySqlCommand cmd = new MySqlCommand(sql, conn);
 
             if (status == 0)
@@ -193,6 +192,30 @@ namespace G.One_GUI
             }
             else AppendText(richTextBox, "쿼리 에러");
             conn.Close();
+            client.Connect("G_ONE_GUI", "userID", "userPW");
+
+            if (status == 0)
+            {
+                if (topic == "LEDTopic")
+                {
+                    client.Publish(topic, Encoding.UTF8.GetBytes("1"));
+                }
+                else if (topic == "MULTITopic")
+                {
+                    client.Publish(topic, Encoding.UTF8.GetBytes("1"));
+                }
+            }
+            else if (status == 1)
+            {
+                if (topic == "LEDTopic")
+                {
+                    client.Publish(topic, Encoding.UTF8.GetBytes("0"));
+                }
+                else if (topic == "MULTITopic")
+                {
+                    client.Publish(topic, Encoding.UTF8.GetBytes("0"));
+                }
+            }
         }
         private void DB_btn_Click(object sender, EventArgs e)
         {
@@ -207,12 +230,12 @@ namespace G.One_GUI
             MySqlCommand cmd = new MySqlCommand(sql, conn);
             MySqlDataReader tableData = cmd.ExecuteReader();
             tableData.Read();
-            Console.WriteLine("Status: {0}", tableData["STATUS"]);
-            string name;
+            string name, topic;
             int status;
             status = (int)tableData["STATUS"];
             name = tableData["SENSOR"].ToString();
-            ChangeStatus(status, name);
+            topic = "LEDTopic";
+            ChangeStatus(status, name, topic);
             tableData.Close();
             conn.Close();
         }
@@ -225,12 +248,12 @@ namespace G.One_GUI
             MySqlCommand cmd = new MySqlCommand(sql, conn);
             MySqlDataReader tableData = cmd.ExecuteReader();
             tableData.Read();
-            Console.WriteLine("Status: {0}", tableData["STATUS"]);
-            string name;
+            string name, topic;
             int status;
             status = (int)tableData["STATUS"];
             name = tableData["SENSOR"].ToString();
-            ChangeStatus(status, name);
+            topic = "MULTITopic";
+            ChangeStatus(status, name, topic);
             tableData.Close();
             conn.Close();
         }
