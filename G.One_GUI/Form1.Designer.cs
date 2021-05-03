@@ -35,10 +35,10 @@ namespace G.One_GUI
             this.richTextBox = new System.Windows.Forms.RichTextBox();
             this.LED_ON_OFF = new System.Windows.Forms.Button();
             this.MULTITAP_ON_OFF = new System.Windows.Forms.Button();
-            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.Tray_Icon = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.프로그램활성화ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.프로그램종료ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -48,7 +48,7 @@ namespace G.One_GUI
             this.DB_bt.Name = "DB_bt";
             this.DB_bt.Size = new System.Drawing.Size(120, 50);
             this.DB_bt.TabIndex = 1;
-            this.DB_bt.Text = "센서 상태 확인";
+            this.DB_bt.Text = "센서 상태 확인/\r\n키보드 연결";
             this.DB_bt.UseVisualStyleBackColor = true;
             this.DB_bt.Click += new System.EventHandler(this.DB_btn_Click);
             // 
@@ -85,36 +85,35 @@ namespace G.One_GUI
             this.MULTITAP_ON_OFF.UseVisualStyleBackColor = true;
             this.MULTITAP_ON_OFF.Click += new System.EventHandler(this.MULTITAP_ON_OFF_Click);
             // 
-            // notifyIcon
+            // Tray_Icon
             // 
-            this.notifyIcon.ContextMenuStrip = this.contextMenuStrip;
-            this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
-            this.notifyIcon.Text = "G.One_Background";
-            this.notifyIcon.Visible = true;
-            this.notifyIcon.DoubleClick += new System.EventHandler(this.notifyIcon_DoubleClick);
-            this.notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
+            this.Tray_Icon.ContextMenuStrip = this.contextMenuStrip;
+            this.Tray_Icon.Icon = ((System.Drawing.Icon)(resources.GetObject("Tray_Icon.Icon")));
+            this.Tray_Icon.Text = "G.One_Background";
+            this.Tray_Icon.Visible = true;
+            this.Tray_Icon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Tray_Icon_MouseDoubleClick);
             // 
             // contextMenuStrip
             // 
             this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.프로그램활성화ToolStripMenuItem,
-            this.프로그램종료ToolStripMenuItem});
+            this.showToolStripMenuItem,
+            this.exitToolStripMenuItem});
             this.contextMenuStrip.Name = "contextMenuStrip";
             this.contextMenuStrip.Size = new System.Drawing.Size(163, 48);
             // 
-            // 프로그램활성화ToolStripMenuItem
+            // showToolStripMenuItem
             // 
-            this.프로그램활성화ToolStripMenuItem.Name = "프로그램활성화ToolStripMenuItem";
-            this.프로그램활성화ToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
-            this.프로그램활성화ToolStripMenuItem.Text = "프로그램 활성화";
-            this.프로그램활성화ToolStripMenuItem.Click += new System.EventHandler(this.ToolStrip_Open_Click);
+            this.showToolStripMenuItem.Name = "showToolStripMenuItem";
+            this.showToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.showToolStripMenuItem.Text = "프로그램 활성화";
+            this.showToolStripMenuItem.Click += new System.EventHandler(this.ToolStrip_Open_Click);
             // 
-            // 프로그램종료ToolStripMenuItem
+            // exitToolStripMenuItem
             // 
-            this.프로그램종료ToolStripMenuItem.Name = "프로그램종료ToolStripMenuItem";
-            this.프로그램종료ToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
-            this.프로그램종료ToolStripMenuItem.Text = "프로그램 종료";
-            this.프로그램종료ToolStripMenuItem.Click += new System.EventHandler(this.ToolStrip_Close_Click);
+            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.exitToolStripMenuItem.Text = "프로그램 종료";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.ToolStrip_Close_Click);
             // 
             // Form1
             // 
@@ -125,9 +124,11 @@ namespace G.One_GUI
             this.Controls.Add(this.LED_ON_OFF);
             this.Controls.Add(this.richTextBox);
             this.Controls.Add(this.DB_bt);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "G.One 키보드 IoT 연결/제어 프로그램";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Resize += new System.EventHandler(this.Tray_Icon_Resize);
             this.contextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -138,10 +139,10 @@ namespace G.One_GUI
         private System.Windows.Forms.RichTextBox richTextBox;
         private System.Windows.Forms.Button LED_ON_OFF;
         private System.Windows.Forms.Button MULTITAP_ON_OFF;
-        private System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Windows.Forms.NotifyIcon Tray_Icon;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem 프로그램종료ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 프로그램활성화ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem showToolStripMenuItem;
     }
 }
 

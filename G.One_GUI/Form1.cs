@@ -13,15 +13,36 @@ namespace G.One_GUI
     public partial class Form1 : Form
     {
         private List<HidDevice> _devices = new List<HidDevice>();
-
         public const ushort ConsoleUsagePage = 0xFF31;
         public const int ConsoleUsage = 0x0074;
 
-        private readonly string strConn = "Server=gvsolgryn.nemiku.cc;Database=TestIoT;Uid=userID;Pwd=userPW;";
-        
+        static readonly string Server = IDPW.DB_Server;
+        static readonly string Database = IDPW.DB_DataBase;
+        static readonly string Uid = IDPW.DB_UserID;
+        static readonly string Pwd = IDPW.DB_UserPW;
+
+        static readonly string MQTT_Host = IDPW.Mqtt_Server;
+        static readonly string MQTT_ClientID = IDPW.Mqtt_ClientID;
+        static readonly string MQTT_ID = IDPW.Mqtt_ID;
+        static readonly string MQTT_PW = IDPW.Mqtt_PW;
+
+        private readonly string strConn = string.Format(
+            "Server={0};Database={1};Uid={2};Pwd={3};charset=utf8;",
+            Server, Database, Uid, Pwd);
+
+        private readonly string mqttConn = MQTT_Host;
+
         public Form1()
         {
             InitializeComponent();
+
+            Tray_Icon.MouseDoubleClick += Tray_Icon_MouseDoubleClick;
+            showToolStripMenuItem.Click += ToolStrip_Open_Click;
+            exitToolStripMenuItem.Click += ToolStrip_Close_Click;
+
+            this.Load += Form1_Load;
+
+            this.FormClosed += Form_Closing;
         }
         static class Underbar
         {
@@ -91,7 +112,6 @@ namespace G.One_GUI
         }
         private void DeviceAttachedHandler()
         {
-            MessageBox.Show("기기가 연결 되었습니다");
         }
         private void DeviceRemovedHandler()
         {
@@ -168,7 +188,7 @@ namespace G.One_GUI
 
         public void ChangeStatus(int status, string name, string topic)
         {
-            MqttClient client = new MqttClient("gvsolgryn.ddns.net");
+            MqttClient client = new MqttClient(mqttConn);
             MySqlConnection conn = new MySqlConnection(strConn);
             conn.Open();
             string sql = "'";
@@ -192,7 +212,7 @@ namespace G.One_GUI
             }
             else AppendText(richTextBox, "쿼리 에러");
             conn.Close();
-            client.Connect("G_ONE_GUI", "userID", "userPW");
+            client.Connect(MQTT_ClientID, MQTT_ID, MQTT_PW);
 
             if (status == 0)
             {
@@ -221,6 +241,7 @@ namespace G.One_GUI
         {
             string sqlText = "SELECT * FROM test";
             TableLoad(sqlText);
+            Device(false);
         }
         private void LED_ON_OFF_Click(object sender, EventArgs e)
         {
@@ -257,32 +278,42 @@ namespace G.One_GUI
             tableData.Close();
             conn.Close();
         }
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-
-        }
         private void Form1_Load(object sender, EventArgs e)
         {
             Device(false);
         }
-        private void Form1_FormClosing(object sender, FormClosedEventArgs e)
+        private void Tray_Icon_Resize(object sender, EventArgs e)
         {
-            
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                this.Visible = false; //창을 보이지 않게 한다.6
+                this.ShowIcon = false; //작업표시줄에서 제거.
+                Tray_Icon.Visible = true; //트레이 아이콘을 표시한다.
+            }
         }
-
-        private void notifyIcon_DoubleClick(object sender, EventArgs e)
+        public void TrayIcon_Load(object sender, FormClosedEventArgs e)
         {
-
+            Tray_Icon.ContextMenuStrip = ContextMenuStrip;
         }
-
+        private void Tray_Icon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            this.ShowInTaskbar = true;
+            this.Visible = true;
+            this.WindowState = FormWindowState.Normal;
+        }
         private void ToolStrip_Open_Click(object sender, EventArgs e)
         {
-
+            this.ShowInTaskbar = true;
+            this.Visible = true;
+            this.WindowState = FormWindowState.Normal;
         }
-
         private void ToolStrip_Close_Click(object sender, EventArgs e)
         {
-
+            MessageBox.Show("프로그램을 종료하시겠습니까?");
+            this.Close();
+        }
+        public void Form_Closing(object sender, FormClosedEventArgs e)
+        {
         }
     }
 }
