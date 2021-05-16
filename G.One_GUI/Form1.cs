@@ -140,7 +140,6 @@ namespace G.One_GUI
             {
                 MySqlConnection conn = new MySqlConnection(strConn);
                 conn.Open();
-                string sql = "SELECT STATUS,SENSOR from sensor_status where ID='1'";
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
                 MySqlDataReader tableData = cmd.ExecuteReader();
                 tableData.Read();
@@ -158,7 +157,6 @@ namespace G.One_GUI
             {
                 MySqlConnection conn = new MySqlConnection(strConn);
                 conn.Open();
-                string sql = "SELECT STATUS,SENSOR from sensor_status where ID='2'";
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
                 MySqlDataReader tableData = cmd.ExecuteReader();
                 tableData.Read();
@@ -175,8 +173,6 @@ namespace G.One_GUI
         }
         public void TableLoad(string sql)
         {
-            //MySqlConnection conn = new MySqlConnection(strConn);
-            MySqlConnection conn = Conn();
             conn.Open();
             MySqlCommand cmd = new MySqlCommand(sql, conn);
             MySqlDataReader tableData = cmd.ExecuteReader();
@@ -201,7 +197,6 @@ namespace G.One_GUI
         public void ChangeStatus(int status, string name, string topic)
         {
             MqttClient client = new MqttClient(mqttConn);
-            MySqlConnection conn = Conn();
             conn.Open();
             string sql = "'";
             MySqlCommand cmd = new MySqlCommand(sql, conn);
@@ -209,14 +204,9 @@ namespace G.One_GUI
 
             if (status == 0)
             {
-                sw.Start();
-                try
-                {
-                    cmd.CommandText = "UPDATE sensor_status SET STATUS = 1 WHERE SENSOR = @sensorName";
-                    cmd.Parameters.AddWithValue("@sensorName", name);
-                    cmd.ExecuteNonQuery();
-                    AppendText(richTextBox, name + " 켜기 완료!");
-                }
+                cmd.ExecuteNonQuery();
+                AppendText(richTextBox, name + " 켜기 완료!");
+            }
                 catch (Exception e)
                 {
                     AppendText(richTextBox, "데이터 베이스 에러로그 : " + e.Message);
@@ -262,14 +252,9 @@ namespace G.One_GUI
             }
             else if (status == 1)
             {
-                sw.Restart();
-                try
-                {
-                    cmd.CommandText = "UPDATE sensor_status SET STATUS = 0 WHERE SENSOR = @sensorName";
-                    cmd.Parameters.AddWithValue("@sensorName", name);
-                    cmd.ExecuteNonQuery();
-                    AppendText(richTextBox, name + " 끄기 완료!");
-                }
+                cmd.ExecuteNonQuery();
+                AppendText(richTextBox, name + " 끄기 완료!");
+            }
                 catch (Exception e)
                 {
                     AppendText(richTextBox, "데이터 베이스 에러로그 : " + e.Message);
@@ -343,7 +328,6 @@ namespace G.One_GUI
         }
         private void DB_btn_Click(object sender, EventArgs e)
         {
-            string sqlText = "SELECT * FROM sensor_status";
             TableLoad(sqlText);
             Device(false);
         }
@@ -351,7 +335,6 @@ namespace G.One_GUI
         {
             MySqlConnection conn = new MySqlConnection(strConn);
             conn.Open();
-            string sql = "SELECT STATUS,SENSOR from sensor_status where ID='1'";
             MySqlCommand cmd = new MySqlCommand(sql, conn);
             MySqlDataReader tableData = cmd.ExecuteReader();
             tableData.Read();
@@ -369,7 +352,6 @@ namespace G.One_GUI
         {
             MySqlConnection conn = new MySqlConnection(strConn);
             conn.Open();
-            string sql = "SELECT STATUS,SENSOR from sensor_status where ID='2'";
             MySqlCommand cmd = new MySqlCommand(sql, conn);
             MySqlDataReader tableData = cmd.ExecuteReader();
             tableData.Read();
@@ -390,7 +372,6 @@ namespace G.One_GUI
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
-                this.Visible = false; //창을 보이지 않게 한다.
                 this.ShowIcon = false; //작업표시줄에서 제거.
                 Tray_Icon.Visible = true; //트레이 아이콘을 표시한다.
             }
